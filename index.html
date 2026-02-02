@@ -35,12 +35,12 @@
 
   <p>
     活動名（必須）<br>
-    <input type="text" id="name" placeholder="例：ねこまる" />
+    <input type="text" id="name" placeholder="例：ねこまる">
   </p>
 
   <p>
     SNS（任意）<br>
-    <input type="text" id="sns" placeholder="X / YouTube のURLなど" />
+    <input type="text" id="sns" placeholder="X / YouTube のURLなど">
   </p>
 
   <button onclick="startDiagnosis()">診断スタート！</button>
@@ -52,27 +52,12 @@
   <div id="result"></div>
 </div>
 
-<!-- Googleフォーム送信用 -->
-<form id="sendForm"
-  action="https://docs.google.com/forms/d/e/1FAIpQLSeImoVfM8wsLUi4aGz1tcqxeHvzNd9EGf3Lp926IHsy03L3VQ/formResponse"
-  method="POST"
-  target="hidden_iframe">
-
-  <input type="hidden" name="entry.1955473310" id="entry_name">
-  <input type="hidden" name="entry.95258108" id="entry_sns">
-  <input type="hidden" name="entry.1030419236" id="entry_result">
-  <input type="hidden" name="entry.183054219" id="entry_scoreA">
-  <input type="hidden" name="entry.1437758588" id="entry_scoreB">
-  <input type="hidden" name="entry.880016262" id="entry_scoreC">
-  <input type="hidden" name="entry.916475231" id="entry_scoreD">
-</form>
-
-<iframe name="hidden_iframe" style="display:none;"></iframe>
-
 <script>
+/* ========= 入力値 ========= */
 let userName = "";
 let userSNS = "";
 
+/* ========= 診断開始 ========= */
 function startDiagnosis() {
   const nameInput = document.getElementById("name").value;
 
@@ -90,6 +75,7 @@ function startDiagnosis() {
   showQuestion();
 }
 
+/* ========= 質問 ========= */
 const questions = [
   { text: "一人で作業する方が落ち着く", axis: "A" },
   { text: "配信は勢いが大事だと思う", axis: "B" },
@@ -157,6 +143,7 @@ function answer(value) {
   }
 }
 
+/* ========= 結果表示 ========= */
 function showResult() {
   document.getElementById("question").style.display = "none";
   document.getElementById("buttons").style.display = "none";
@@ -180,16 +167,26 @@ function showResult() {
   sendToGoogleForm(result);
 }
 
+/* ========= Googleフォーム送信 ========= */
 function sendToGoogleForm(result) {
-  document.getElementById("entry_name").value = userName;
-  document.getElementById("entry_sns").value = userSNS;
-  document.getElementById("entry_result").value = result;
-  document.getElementById("entry_scoreA").value = scores.A;
-  document.getElementById("entry_scoreB").value = scores.B;
-  document.getElementById("entry_scoreC").value = scores.C;
-  document.getElementById("entry_scoreD").value = scores.D;
+  const formURL =
+    "https://docs.google.com/forms/d/e/1FAIpQLSeImoVfM8wsLUi4aGz1tcqxeHvzNd9EGf3Lp926IHsy03L3VQ/formResponse";
 
-  document.getElementById("sendForm").submit();
+  const data = new FormData();
+
+  data.append("entry.2016327248", userName); // 活動名
+  data.append("entry.363261105", userSNS);   // SNS
+  data.append("entry.429828253", result);    // 診断結果
+  data.append("entry.1683531211", scores.A);
+  data.append("entry.1818111503", scores.B);
+  data.append("entry.772384761", scores.C);
+  data.append("entry.1265151043", scores.D);
+
+  fetch(formURL, {
+    method: "POST",
+    mode: "no-cors",
+    body: data
+  });
 }
 </script>
 
