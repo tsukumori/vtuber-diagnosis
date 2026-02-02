@@ -52,6 +52,22 @@
   <div id="result"></div>
 </div>
 
+<!-- Googleフォーム送信用 -->
+<form id="sendForm"
+  action="https://docs.google.com/forms/d/e/1FAIpQLSeImoVfM8wsLUi4aGz1tcqxeHvzNd9EGf3Lp926IHsy03L3VQ/formResponse"
+  method="POST"
+  target="hidden_iframe">
+
+  <input type="hidden" name="entry.1955473310" id="entry_name">
+  <input type="hidden" name="entry.95258108" id="entry_sns">
+  <input type="hidden" name="entry.1030419236" id="entry_result">
+  <input type="hidden" name="entry.183054219" id="entry_scoreA">
+  <input type="hidden" name="entry.1437758588" id="entry_scoreB">
+  <input type="hidden" name="entry.880016262" id="entry_scoreC">
+  <input type="hidden" name="entry.916475231" id="entry_scoreD">
+</form>
+
+<iframe name="hidden_iframe" style="display:none;"></iframe>
 
 <script>
 let userName = "";
@@ -74,122 +90,108 @@ function startDiagnosis() {
   showQuestion();
 }
 
+const questions = [
+  { text: "一人で作業する方が落ち着く", axis: "A" },
+  { text: "配信は勢いが大事だと思う", axis: "B" },
+  { text: "長時間配信は苦じゃない", axis: "C" },
+  { text: "計画を立てるのが得意", axis: "D" },
+  { text: "雑談は即興で話すことが多い", axis: "B" },
+  { text: "毎回だいたい同じ時間に配信したい", axis: "D" }
+];
 
-  // 質問データ（仮）
-  const questions = [
-    { text: "一人で作業する方が落ち着く", axis: "A" },
-    { text: "配信は勢いが大事だと思う", axis: "B" },
-    { text: "長時間配信は苦じゃない", axis: "C" },
-    { text: "計画を立てるのが得意", axis: "D" },
-    { text: "雑談は即興で話すことが多い", axis: "B" },
-    { text: "毎回だいたい同じ時間に配信したい", axis: "D" }
-  ];
+const results = {
+  "0000": "押し花の栞",
+  "0001": "万年筆",
+  "0010": "釣り",
+  "0011": "砂時計",
+  "0100": "ガラスペン",
+  "0101": "剣",
+  "0110": "万華鏡",
+  "0111": "文字が流れる台本ノート",
+  "1000": "地球儀",
+  "1001": "無限ツッコミハリセン",
+  "1010": "真面目さんの知性メガネ",
+  "1011": "チェックリスト付き腕時計",
+  "1100": "ぷりぷりキューティー猫耳",
+  "1101": "ド派手クラッカー",
+  "1110": "ふわふわ天使の羽",
+  "1111": "冒険地図"
+};
 
-  const results = {
-    "0000": "押し花の栞",
-    "0001": "万年筆",
-    "0010": "釣り",
-    "0011": "砂時計",
-    "0100": "ガラスペン",
-    "0101": "剣",
-    "0110": "万華鏡",
-    "0111": "文字が流れる台本ノート",
-    "1000": "地球儀",
-    "1001": "無限ツッコミハリセン",
-    "1010": "真面目さんの知性メガネ",
-    "1011": "チェックリスト付き腕時計",
-    "1100": "ぷりぷりキューティー猫耳",
-    "1101": "ド派手クラッカー",
-    "1110": "ふわふわ天使の羽",
-    "1111": "冒険地図"
-  };
+let current = 0;
+let scores = { A: 0, B: 0, C: 0, D: 0 };
 
-  let current = 0;
-  let scores = { A: 0, B: 0, C: 0, D: 0 };
+const scale = [
+  { label: "かなりあてはまる", value: 2 },
+  { label: "ややあてはまる", value: 1 },
+  { label: "どちらでもない", value: 0 },
+  { label: "ややあてはまらない", value: -1 },
+  { label: "全くあてはまらない", value: -2 }
+];
 
-  const scale = [
-    { label: "かなりあてはまる", value: 2 },
-    { label: "ややあてはまる", value: 1 },
-    { label: "どちらでもない", value: 0 },
-    { label: "ややあてはまらない", value: -1 },
-    { label: "全くあてはまらない", value: -2 }
-  ];
+function showQuestion() {
+  const q = questions[current];
+  document.getElementById("question").textContent =
+    `Q${current + 1}. ${q.text}`;
 
+  const buttons = document.getElementById("buttons");
+  buttons.innerHTML = "";
 
-
-  function showQuestion() {
-    const q = questions[current];
-    document.getElementById("question").textContent =
-      `Q${current + 1}. ${q.text}`;
-
-    const buttons = document.getElementById("buttons");
-    buttons.innerHTML = "";
-
-    scale.forEach(s => {
-      const btn = document.createElement("button");
-      btn.textContent = s.label;
-      btn.onclick = () => answer(s.value);
-      buttons.appendChild(btn);
-    });
-  }
-
-  function answer(value) {
-    const axis = questions[current].axis;
-    scores[axis] += value;
-    current++;
-
-    if (current < questions.length) {
-      showQuestion();
-    } else {
-      showResult();
-    }
-  }
-
-  function showResult() {
-    document.getElementById("question").style.display = "none";
-    document.getElementById("buttons").style.display = "none";
-
-    let key = "";
-    let closeAxes = 0;
-
-    ["A", "B", "C", "D"].forEach(axis => {
-      if (Math.abs(scores[axis]) <= 1) {
-        closeAxes++;
-      }
-      key += scores[axis] >= 0 ? "0" : "1";
-    });
-
-    const result =
-      closeAxes >= 3
-        ? "🌈 虹色マイク（万能バランスタイプ）"
-        : results[key];
-
-document.getElementById("result").textContent =
-  `${userName}さんの診断結果は「${result}」です！`;
-
-sendToGoogleForm(result);
-
-  }
-
-function sendToGoogleForm(result) {
-const formURL = "https://docs.google.com/forms/d/e/1FAIpQLSeImoVfM8wsLUi4aGz1tcqxeHvzNd9EGf3Lp926IHsy03L3VQ/formResponse";
-
-const data = new FormData();
-data.append("entry.1030419236", resultText);
-data.append("entry.183054219", scoreA);
-data.append("entry.1437758588", scoreB);
-data.append("entry.880016262", scoreC);
-data.append("entry.916475231", scoreD);
-
-fetch(formURL, {
-  method: "POST",
-  mode: "no-cors",
-  body: data
-});
+  scale.forEach(s => {
+    const btn = document.createElement("button");
+    btn.textContent = s.label;
+    btn.onclick = () => answer(s.value);
+    buttons.appendChild(btn);
+  });
 }
 
+function answer(value) {
+  const axis = questions[current].axis;
+  scores[axis] += value;
+  current++;
+
+  if (current < questions.length) {
+    showQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  document.getElementById("question").style.display = "none";
+  document.getElementById("buttons").style.display = "none";
+
+  let key = "";
+  let closeAxes = 0;
+
+  ["A", "B", "C", "D"].forEach(axis => {
+    if (Math.abs(scores[axis]) <= 1) closeAxes++;
+    key += scores[axis] >= 0 ? "0" : "1";
+  });
+
+  const result =
+    closeAxes >= 3
+      ? "🌈 虹色マイク（万能バランスタイプ）"
+      : results[key];
+
+  document.getElementById("result").textContent =
+    `${userName}さんの診断結果は「${result}」です！`;
+
+  sendToGoogleForm(result);
+}
+
+function sendToGoogleForm(result) {
+  document.getElementById("entry_name").value = userName;
+  document.getElementById("entry_sns").value = userSNS;
+  document.getElementById("entry_result").value = result;
+  document.getElementById("entry_scoreA").value = scores.A;
+  document.getElementById("entry_scoreB").value = scores.B;
+  document.getElementById("entry_scoreC").value = scores.C;
+  document.getElementById("entry_scoreD").value = scores.D;
+
+  document.getElementById("sendForm").submit();
+}
 </script>
 
 </body>
 </html>
-`
