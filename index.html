@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>VTuber診断</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 40px;
+    }
+    button {
+      padding: 10px 16px;
+      margin: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    #question {
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
+    #result {
+      margin-top: 30px;
+      font-size: 22px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<h1>VTuberタイプ診断</h1>
+
+<div id="question"></div>
+<div id="buttons"></div>
+<div id="result"></div>
+
+<script>
+  // 質問データ（仮）
+  const questions = [
+    { text: "一人で作業する方が落ち着く", axis: "A" },
+    { text: "配信は勢いが大事だと思う", axis: "B" },
+    { text: "長時間配信は苦じゃない", axis: "C" },
+    { text: "計画を立てるのが得意", axis: "D" },
+    { text: "雑談は即興で話すことが多い", axis: "B" },
+    { text: "毎回だいたい同じ時間に配信したい", axis: "D" }
+  ];
+
+  const results = {
+    "0000": "押し花の栞",
+    "0001": "万年筆",
+    "0010": "釣り",
+    "0011": "砂時計",
+    "0100": "ガラスペン",
+    "0101": "剣",
+    "0110": "万華鏡",
+    "0111": "文字が流れる台本ノート",
+    "1000": "地球儀",
+    "1001": "無限ツッコミハリセン",
+    "1010": "真面目さんの知性メガネ",
+    "1011": "チェックリスト付き腕時計",
+    "1100": "ぷりぷりキューティー猫耳",
+    "1101": "ド派手クラッカー",
+    "1110": "ふわふわ天使の羽",
+    "1111": "冒険地図"
+  };
+
+  let current = 0;
+  let scores = { A: 0, B: 0, C: 0, D: 0 };
+
+  const scale = [
+    { label: "かなりあてはまる", value: 2 },
+    { label: "ややあてはまる", value: 1 },
+    { label: "どちらでもない", value: 0 },
+    { label: "ややあてはまらない", value: -1 },
+    { label: "全くあてはまらない", value: -2 }
+  ];
+
+  showQuestion();
+
+  function showQuestion() {
+    const q = questions[current];
+    document.getElementById("question").textContent =
+      `Q${current + 1}. ${q.text}`;
+
+    const buttons = document.getElementById("buttons");
+    buttons.innerHTML = "";
+
+    scale.forEach(s => {
+      const btn = document.createElement("button");
+      btn.textContent = s.label;
+      btn.onclick = () => answer(s.value);
+      buttons.appendChild(btn);
+    });
+  }
+
+  function answer(value) {
+    const axis = questions[current].axis;
+    scores[axis] += value;
+    current++;
+
+    if (current < questions.length) {
+      showQuestion();
+    } else {
+      showResult();
+    }
+  }
+
+  function showResult() {
+    document.getElementById("question").style.display = "none";
+    document.getElementById("buttons").style.display = "none";
+
+    let key = "";
+    let closeAxes = 0;
+
+    ["A", "B", "C", "D"].forEach(axis => {
+      if (Math.abs(scores[axis]) <= 1) {
+        closeAxes++;
+      }
+      key += scores[axis] >= 0 ? "0" : "1";
+    });
+
+    const result =
+      closeAxes >= 3
+        ? "🌈 虹色マイク（万能バランスタイプ）"
+        : results[key];
+
+    document.getElementById("result").textContent =
+      `あなたの診断結果は「${result}」です！`;
+  }
+</script>
+
+</body>
+</html>
+`
