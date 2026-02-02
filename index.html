@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>VTuber診断</title>
+  <title>VTuberタイプ診断</title>
   <style>
     body {
       font-family: sans-serif;
@@ -10,10 +10,11 @@
       padding: 40px;
     }
     button {
-      padding: 10px 16px;
+      padding: 12px 18px;
       margin: 6px;
       font-size: 14px;
       cursor: pointer;
+      min-width: 200px;
     }
     #question {
       font-size: 20px;
@@ -31,58 +32,50 @@
 <h1>VTuberタイプ診断</h1>
 
 <div id="inputArea">
-  <h2>まずは教えてね</h2>
-
   <p>
     活動名（必須）<br>
-    <input type="text" id="name" placeholder="例：ねこまる">
+    <input type="text" id="name">
   </p>
-
   <p>
     SNS（任意）<br>
-    <input type="text" id="sns" placeholder="X / YouTube のURLなど">
+    <input type="text" id="sns">
   </p>
-
-  <button onclick="startDiagnosis()">診断スタート！</button>
+  <button onclick="startDiagnosis()">診断スタート</button>
 </div>
 
 <div id="diagnosisArea" style="display:none;">
   <div id="question"></div>
   <div id="buttons"></div>
+</div>
+
+<div id="resultArea" style="display:none;">
   <div id="result"></div>
+  <button id="shareBtn">Xで共有する</button>
 </div>
 
 <script>
-/* ========= 入力値 ========= */
 let userName = "";
 let userSNS = "";
 
-/* ========= 診断開始 ========= */
-function startDiagnosis() {
-  const nameInput = document.getElementById("name").value;
+let scores = { A: 0, B: 0, C: 0, D: 0 };
+let current = 0;
 
-  if (!nameInput) {
-    alert("活動名を入力してね！");
-    return;
-  }
+let questions = [
+  { axis: "A", text: "配信の理想は？", choices: ["一人で黙々やる", "どちらでも", "誰かと一緒にやる"] },
+  { axis: "A", text: "トラブルが起きたとき、どうする？", choices: ["まず一人で考える", "場合による", "すぐ誰かに相談"] },
+  { axis: "A", text: "コラボ配信についてどう思う？", choices: ["正直あまり得意じゃない", "どちらとも言えない", "大好き／積極的"] },
 
-  userName = nameInput;
-  userSNS = document.getElementById("sns").value;
+  { axis: "B", text: "配信内容を決めるときは？", choices: ["数字や反応を重視", "半々くらい", "気分やノリ"] },
+  { axis: "B", text: "配信後、アーカイブやデータを見る？", choices: ["かなり細かく見る", "たまに見る", "ほとんど見ない"] },
+  { axis: "B", text: "伸びる配信に必要だと思うのは？", choices: ["分析と改善", "両方大事", "勢いと熱量"] },
 
-  document.getElementById("inputArea").style.display = "none";
-  document.getElementById("diagnosisArea").style.display = "block";
+  { axis: "C", text: "理想の配信時間は？", choices: ["1時間前後", "2〜3時間", "気づいたら長時間"] },
+  { axis: "C", text: "配信中の集中力は？", choices: ["短期集中型", "波がある", "長く続く"] },
+  { axis: "C", text: "ゲームや作業にハマると？", choices: ["すぐ飽きる", "ものによる", "何時間もやる"] },
 
-  showQuestion();
-}
-
-/* ========= 質問 ========= */
-const questions = [
-  { text: "一人で作業する方が落ち着く", axis: "A" },
-  { text: "配信は勢いが大事だと思う", axis: "B" },
-  { text: "長時間配信は苦じゃない", axis: "C" },
-  { text: "計画を立てるのが得意", axis: "D" },
-  { text: "雑談は即興で話すことが多い", axis: "B" },
-  { text: "毎回だいたい同じ時間に配信したい", axis: "D" }
+  { axis: "D", text: "配信準備はどれくらいする？", choices: ["ほぼノープラン", "最低限", "しっかり"] },
+  { axis: "D", text: "スケジュール管理は？", choices: ["ゆるめ", "普通", "きっちり"] },
+  { axis: "D", text: "台本や進行表について", choices: ["あまり使わない", "あると安心", "必須"] }
 ];
 
 const results = {
@@ -96,24 +89,38 @@ const results = {
   "0111": "文字が流れる台本ノート",
   "1000": "地球儀",
   "1001": "無限ツッコミハリセン",
-  "1010": "真面目さんの知性メガネ",
-  "1011": "チェックリスト付き腕時計",
-  "1100": "ぷりぷりキューティー猫耳",
+  "1010": "知性メガネ",
+  "1011": "チェックリスト腕時計",
+  "1100": "ぷりぷり猫耳",
   "1101": "ド派手クラッカー",
   "1110": "ふわふわ天使の羽",
   "1111": "冒険地図"
 };
 
-let current = 0;
-let scores = { A: 0, B: 0, C: 0, D: 0 };
+// シャッフル
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
 
-const scale = [
-  { label: "かなりあてはまる", value: 2 },
-  { label: "ややあてはまる", value: 1 },
-  { label: "どちらでもない", value: 0 },
-  { label: "ややあてはまらない", value: -1 },
-  { label: "全くあてはまらない", value: -2 }
-];
+function startDiagnosis() {
+  userName = document.getElementById("name").value;
+  userSNS = document.getElementById("sns").value;
+
+  if (!userName) {
+    alert("活動名を入力してね！");
+    return;
+  }
+
+  shuffle(questions);
+
+  document.getElementById("inputArea").style.display = "none";
+  document.getElementById("diagnosisArea").style.display = "block";
+
+  showQuestion();
+}
 
 function showQuestion() {
   const q = questions[current];
@@ -123,17 +130,16 @@ function showQuestion() {
   const buttons = document.getElementById("buttons");
   buttons.innerHTML = "";
 
-  scale.forEach(s => {
+  q.choices.forEach((label, index) => {
     const btn = document.createElement("button");
-    btn.textContent = s.label;
-    btn.onclick = () => answer(s.value);
+    btn.textContent = label;
+    btn.onclick = () => answer(index - 1);
     buttons.appendChild(btn);
   });
 }
 
 function answer(value) {
-  const axis = questions[current].axis;
-  scores[axis] += value;
+  scores[questions[current].axis] += value;
   current++;
 
   if (current < questions.length) {
@@ -143,40 +149,65 @@ function answer(value) {
   }
 }
 
-/* ========= 結果表示 ========= */
 function showResult() {
-  document.getElementById("question").style.display = "none";
-  document.getElementById("buttons").style.display = "none";
+  document.getElementById("diagnosisArea").style.display = "none";
+  document.getElementById("resultArea").style.display = "block";
 
   let key = "";
-  let closeAxes = 0;
+  let balanced = 0;
 
-  ["A", "B", "C", "D"].forEach(axis => {
-    if (Math.abs(scores[axis]) <= 1) closeAxes++;
+  ["A","B","C","D"].forEach(axis => {
+    if (Math.abs(scores[axis]) <= 1) balanced++;
     key += scores[axis] >= 0 ? "0" : "1";
   });
 
-  const result =
-    closeAxes >= 3
-      ? "🌈 虹色マイク（万能バランスタイプ）"
+  let result =
+    balanced >= 3
+      ? "⚖️ 天秤（バランスタイプ）"
       : results[key];
 
+  // 🌈 超レア抽選（0.001%）
+  let isRainbow = false;
+  if (Math.random() < 0.00001) {
+    result = "🌈 虹色マイク（選ばれし者）";
+    isRainbow = true;
+    alert("🎉✨おめでとうございます！！✨🎉\n選ばれし者だけが手にする《虹色マイク》が出ました！");
+  }
+
   document.getElementById("result").textContent =
-    `${userName}さんの診断結果は「${result}」です！`;
+    `${userName}さんの配信スタイルに最適なアイテムは「${result}」でした！`;
+
+  const tweetText = isRainbow
+    ? `【🌈超レア診断結果🌈】
+${userName}の配信スタイルに最適なアイテムは
+「虹色マイク（選ばれし者）」でした🎤✨
+
+#VTuberタイプ診断 #NyanProLab`
+    : `${userName}の配信スタイルに最適なアイテムは「${result}」でした🩵✨
+あなたは何が出る？
+
+#VTuberタイプ診断 #NyanProLab`;
+
+  document.getElementById("shareBtn").onclick = () => {
+    window.open(
+      "https://twitter.com/intent/tweet?text=" +
+      encodeURIComponent(tweetText),
+      "_blank"
+    );
+  };
 
   sendToGoogleForm(result);
 }
 
-/* ========= Googleフォーム送信 ========= */
+/* Googleフォーム送信 */
 function sendToGoogleForm(result) {
   const formURL =
     "https://docs.google.com/forms/d/e/1FAIpQLSeImoVfM8wsLUi4aGz1tcqxeHvzNd9EGf3Lp926IHsy03L3VQ/formResponse";
 
   const data = new FormData();
-
-  data.append("entry.2016327248", userName); // 活動名
-  data.append("entry.363261105", userSNS);   // SNS
-  data.append("entry.429828253", result);    // 診断結果
+  data.append("entry.2016327248", userName);
+  data.append("entry.363261105", userSNS);
+  data.append("entry.429828253", result);
   data.append("entry.1683531211", scores.A);
   data.append("entry.1818111503", scores.B);
   data.append("entry.772384761", scores.C);
