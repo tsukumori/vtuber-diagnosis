@@ -30,11 +30,51 @@
 
 <h1>VTuberタイプ診断</h1>
 
-<div id="question"></div>
-<div id="buttons"></div>
-<div id="result"></div>
+<div id="inputArea">
+  <h2>まずは教えてね</h2>
+
+  <p>
+    活動名（必須）<br>
+    <input type="text" id="name" placeholder="例：ねこまる" />
+  </p>
+
+  <p>
+    SNS（任意）<br>
+    <input type="text" id="sns" placeholder="X / YouTube のURLなど" />
+  </p>
+
+  <button onclick="startDiagnosis()">診断スタート！</button>
+</div>
+
+<div id="diagnosisArea" style="display:none;">
+  <div id="question"></div>
+  <div id="buttons"></div>
+  <div id="result"></div>
+</div>
+
 
 <script>
+let userName = "";
+let userSNS = "";
+
+function startDiagnosis() {
+  const nameInput = document.getElementById("name").value;
+
+  if (!nameInput) {
+    alert("活動名を入力してね！");
+    return;
+  }
+
+  userName = nameInput;
+  userSNS = document.getElementById("sns").value;
+
+  document.getElementById("inputArea").style.display = "none";
+  document.getElementById("diagnosisArea").style.display = "block";
+
+  showQuestion();
+}
+
+
   // 質問データ（仮）
   const questions = [
     { text: "一人で作業する方が落ち着く", axis: "A" },
@@ -75,7 +115,7 @@
     { label: "全くあてはまらない", value: -2 }
   ];
 
-  showQuestion();
+
 
   function showQuestion() {
     const q = questions[current];
@@ -124,9 +164,30 @@
         ? "🌈 虹色マイク（万能バランスタイプ）"
         : results[key];
 
-    document.getElementById("result").textContent =
-      `あなたの診断結果は「${result}」です！`;
+document.getElementById("result").textContent =
+  `${userName}さんの診断結果は「${result}」です！`;
+
+sendToGoogleForm(result);
+
   }
+
+function sendToGoogleForm(result) {
+const formURL = "https://docs.google.com/forms/d/e/1FAIpQLSeImoVfM8wsLUi4aGz1tcqxeHvzNd9EGf3Lp926IHsy03L3VQ/formResponse";
+
+const data = new FormData();
+data.append("entry.1030419236", resultText);
+data.append("entry.183054219", scoreA);
+data.append("entry.1437758588", scoreB);
+data.append("entry.880016262", scoreC);
+data.append("entry.916475231", scoreD);
+
+fetch(formURL, {
+  method: "POST",
+  mode: "no-cors",
+  body: data
+});
+}
+
 </script>
 
 </body>
