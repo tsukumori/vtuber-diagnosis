@@ -1,223 +1,267 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>VTuberタイプ診断</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      padding: 40px;
-    }
-    button {
-      padding: 12px 18px;
-      margin: 6px;
-      font-size: 14px;
-      cursor: pointer;
-      min-width: 200px;
-    }
-    #question {
-      font-size: 20px;
-      margin-bottom: 20px;
-    }
-    #result {
-      margin-top: 30px;
-      font-size: 22px;
-      font-weight: bold;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>VTuberタイプ診断</title>
+<style>
+body {
+  font-family: sans-serif;
+  text-align: center;
+  padding: 40px;
+}
+button {
+  padding: 10px 16px;
+  margin: 6px;
+  font-size: 14px;
+  min-width: 220px;
+  cursor: pointer;
+}
+#question { font-size: 20px; margin-bottom: 20px; }
+#result { font-size: 22px; font-weight: bold; margin-top: 20px; }
+.switches {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  background: #f9f9f9;
+  font-size: 12px;
+}
+</style>
 </head>
 <body>
 
 <h1>VTuberタイプ診断</h1>
 
+<!-- テスト用スイッチ（常時表示） -->
+<div class="switches">
+  <label>
+    <input type="checkbox" id="modeSwitch">
+    オーディション後表示（アイテム名）
+  </label><br>
+  <label>
+    <input type="checkbox" id="rainbowSwitch">
+    🌈 虹色マイク確定
+  </label>
+</div>
+
+<!-- 入力画面 -->
 <div id="inputArea">
   <p>
     活動名（必須）<br>
-    <input type="text" id="name">
+    <input id="nameInput">
   </p>
+
   <p>
     SNS（任意）<br>
-    <input type="text" id="sns">
+    <input id="snsInput">
   </p>
+
   <button onclick="startDiagnosis()">診断スタート</button>
+
+  <br><br>
+
+  <p><strong>診断済み（番号取得済み）の方はこちら</strong></p>
+
+  <p>
+    診断結果番号（1〜18）<br>
+    <input id="directNumber" type="number" min="1" max="18">
+  </p>
+
+  <button onclick="jumpResult()">番号で結果を見る</button>
 </div>
 
+<!-- 診断画面 -->
 <div id="diagnosisArea" style="display:none;">
   <div id="question"></div>
   <div id="buttons"></div>
+  <button onclick="goBack()">← 戻る</button>
 </div>
 
+<!-- 結果画面 -->
 <div id="resultArea" style="display:none;">
   <div id="result"></div>
-  <button id="shareBtn">Xで共有する</button>
+  <button id="shareBtn">Xで共有</button><br>
+  <button onclick="restart()">もう一度診断</button>
 </div>
 
 <script>
-let userName = "";
-let userSNS = "";
-
-let scores = { A: 0, B: 0, C: 0, D: 0 };
-let current = 0;
-
-let questions = [
-  { axis: "A", text: "配信の理想は？", choices: ["一人で黙々やる", "どちらでも", "誰かと一緒にやる"] },
-  { axis: "A", text: "トラブルが起きたとき、どうする？", choices: ["まず一人で考える", "場合による", "すぐ誰かに相談"] },
-  { axis: "A", text: "コラボ配信についてどう思う？", choices: ["正直あまり得意じゃない", "どちらとも言えない", "大好き／積極的"] },
-
-  { axis: "B", text: "配信内容を決めるときは？", choices: ["数字や反応を重視", "半々くらい", "気分やノリ"] },
-  { axis: "B", text: "配信後、アーカイブやデータを見る？", choices: ["かなり細かく見る", "たまに見る", "ほとんど見ない"] },
-  { axis: "B", text: "伸びる配信に必要だと思うのは？", choices: ["分析と改善", "両方大事", "勢いと熱量"] },
-
-  { axis: "C", text: "理想の配信時間は？", choices: ["1時間前後", "2〜3時間", "気づいたら長時間"] },
-  { axis: "C", text: "配信中の集中力は？", choices: ["短期集中型", "波がある", "長く続く"] },
-  { axis: "C", text: "ゲームや作業にハマると？", choices: ["すぐ飽きる", "ものによる", "何時間もやる"] },
-
-  { axis: "D", text: "配信準備はどれくらいする？", choices: ["ほぼノープラン", "最低限", "しっかり"] },
-  { axis: "D", text: "スケジュール管理は？", choices: ["ゆるめ", "普通", "きっちり"] },
-  { axis: "D", text: "台本や進行表について", choices: ["あまり使わない", "あると安心", "必須"] }
+/* =====================
+   定数・変数
+===================== */
+const resultList = [
+  null,
+  "押し花の栞","万年筆","釣り","砂時計",
+  "ガラスペン","剣","万華鏡","文字が流れる台本ノート",
+  "地球儀","無限ツッコミハリセン","知性メガネ","チェックリスト腕時計",
+  "ぷりぷり猫耳","ド派手クラッカー","ふわふわ天使の羽","冒険地図",
+  "⚖️ 天秤","🌈 虹色マイク（選ばれし者）"
 ];
 
-const results = {
-  "0000": "押し花の栞",
-  "0001": "万年筆",
-  "0010": "釣り",
-  "0011": "砂時計",
-  "0100": "ガラスペン",
-  "0101": "剣",
-  "0110": "万華鏡",
-  "0111": "文字が流れる台本ノート",
-  "1000": "地球儀",
-  "1001": "無限ツッコミハリセン",
-  "1010": "知性メガネ",
-  "1011": "チェックリスト腕時計",
-  "1100": "ぷりぷり猫耳",
-  "1101": "ド派手クラッカー",
-  "1110": "ふわふわ天使の羽",
-  "1111": "冒険地図"
+const resultKeyMap = {
+  "0000":1,"0001":2,"0010":3,"0011":4,
+  "0100":5,"0101":6,"0110":7,"0111":8,
+  "1000":9,"1001":10,"1010":11,"1011":12,
+  "1100":13,"1101":14,"1110":15,"1111":16
 };
 
-// シャッフル
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
+let userName = "";
+let userSNS = "";
+let scores = {A:0,B:0,C:0,D:0};
+let current = 0;
+let history = [];
+
+const questions = [
+  {axis:"A",text:"配信の理想は？",choices:["一人","どちらでも","誰かと"]},
+  {axis:"A",text:"トラブル時は？",choices:["一人で","場合による","相談"]},
+  {axis:"A",text:"コラボは？",choices:["苦手","普通","好き"]},
+
+  {axis:"B",text:"配信内容は？",choices:["分析","半々","ノリ"]},
+  {axis:"B",text:"データ見る？",choices:["見る","たまに","見ない"]},
+  {axis:"B",text:"伸びる秘訣は？",choices:["改善","両方","勢い"]},
+
+  {axis:"C",text:"配信時間は？",choices:["短め","普通","長時間"]},
+  {axis:"C",text:"集中力は？",choices:["短期","波","持続"]},
+  {axis:"C",text:"ハマると？",choices:["飽きる","普通","没頭"]},
+
+  {axis:"D",text:"準備量は？",choices:["なし","最低限","万全"]},
+  {axis:"D",text:"管理は？",choices:["ゆるい","普通","厳密"]},
+  {axis:"D",text:"台本は？",choices:["使わない","安心","必須"]}
+];
+
+/* =====================
+   共通
+===================== */
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
   }
 }
 
-function startDiagnosis() {
-  userName = document.getElementById("name").value;
-  userSNS = document.getElementById("sns").value;
+/* =====================
+   診断開始
+===================== */
+function startDiagnosis(){
+  userName = document.getElementById("nameInput").value.trim();
+  userSNS  = document.getElementById("snsInput").value.trim();
 
-  if (!userName) {
-    alert("活動名を入力してね！");
+  if(!userName){
+    alert("活動名を入力してね");
     return;
   }
 
   shuffle(questions);
-
-  document.getElementById("inputArea").style.display = "none";
-  document.getElementById("diagnosisArea").style.display = "block";
-
+  document.getElementById("inputArea").style.display="none";
+  document.getElementById("diagnosisArea").style.display="block";
   showQuestion();
 }
 
-function showQuestion() {
+function showQuestion(){
   const q = questions[current];
-  document.getElementById("question").textContent =
-    `Q${current + 1}. ${q.text}`;
-
+  document.getElementById("question").textContent = `Q${current+1}. ${q.text}`;
   const buttons = document.getElementById("buttons");
   buttons.innerHTML = "";
 
-  q.choices.forEach((label, index) => {
-    const btn = document.createElement("button");
-    btn.textContent = label;
-    btn.onclick = () => answer(index - 1);
-    buttons.appendChild(btn);
+  q.choices.forEach((c,i)=>{
+    const b=document.createElement("button");
+    b.textContent=c;
+    b.onclick=()=>answer(i-1);
+    buttons.appendChild(b);
   });
 }
 
-function answer(value) {
-  scores[questions[current].axis] += value;
+function answer(v){
+  const a=questions[current].axis;
+  history.push({a,v});
+  scores[a]+=v;
   current++;
-
-  if (current < questions.length) {
-    showQuestion();
-  } else {
-    showResult();
-  }
+  current<questions.length ? showQuestion() : showResult(calcResult());
 }
 
-function showResult() {
-  document.getElementById("diagnosisArea").style.display = "none";
-  document.getElementById("resultArea").style.display = "block";
+function goBack(){
+  if(current===0)return;
+  current--;
+  const h=history.pop();
+  scores[h.a]-=h.v;
+  showQuestion();
+}
 
-  let key = "";
-  let balanced = 0;
+/* =====================
+   結果計算
+===================== */
+function calcResult(){
+  if(document.getElementById("rainbowSwitch").checked) return 18;
 
-  ["A","B","C","D"].forEach(axis => {
-    if (Math.abs(scores[axis]) <= 1) balanced++;
-    key += scores[axis] >= 0 ? "0" : "1";
+  let key="", balanced=0;
+  ["A","B","C","D"].forEach(a=>{
+    if(Math.abs(scores[a])<=1) balanced++;
+    key+=scores[a]>=0?"0":"1";
   });
 
-  let result =
-    balanced >= 3
-      ? "⚖️ 天秤（バランスタイプ）"
-      : results[key];
+  if(balanced>=3) return 17;
+  if(Math.random()<0.00001) return 18;
+  return resultKeyMap[key];
+}
 
-  // 🌈 超レア抽選（0.001%）
-  let isRainbow = false;
-  if (Math.random() < 0.00001) {
-    result = "🌈 虹色マイク（選ばれし者）";
-    isRainbow = true;
-    alert("🎉✨おめでとうございます！！✨🎉\n選ばれし者だけが手にする《虹色マイク》が出ました！");
-  }
+function showResult(num){
+  document.getElementById("diagnosisArea").style.display="none";
+  document.getElementById("resultArea").style.display="block";
+
+  const after = document.getElementById("modeSwitch").checked;
+  const display = after ? resultList[num] : `診断結果番号：${num}`;
 
   document.getElementById("result").textContent =
-    `${userName}さんの配信スタイルに最適なアイテムは「${result}」でした！`;
+    `${userName}さんの診断結果：${display}`;
 
-  const tweetText = isRainbow
-    ? `【🌈超レア診断結果🌈】
-${userName}の配信スタイルに最適なアイテムは
-「虹色マイク（選ばれし者）」でした🎤✨
-
-#VTuberタイプ診断 #NyanProLab`
-    : `${userName}の配信スタイルに最適なアイテムは「${result}」でした🩵✨
-あなたは何が出る？
-
-#VTuberタイプ診断 #NyanProLab`;
-
-  document.getElementById("shareBtn").onclick = () => {
+  document.getElementById("shareBtn").onclick = ()=>{
     window.open(
       "https://twitter.com/intent/tweet?text=" +
-      encodeURIComponent(tweetText),
-      "_blank"
+      encodeURIComponent(`${userName}の診断結果は「${resultList[num]}」！ #VTuberタイプ診断 #NyanProLab`)
     );
   };
 
-  sendToGoogleForm(result);
+  sendToGoogleForm(num);
 }
 
-/* Googleフォーム送信 */
-function sendToGoogleForm(result) {
-  const formURL =
-    "https://docs.google.com/forms/d/e/1FAIpQLSeImoVfM8wsLUi4aGz1tcqxeHvzNd9EGf3Lp926IHsy03L3VQ/formResponse";
+/* =====================
+   番号ジャンプ
+===================== */
+function jumpResult(){
+  userName = document.getElementById("nameInput").value.trim();
+  userSNS  = document.getElementById("snsInput").value.trim();
+  const n = parseInt(document.getElementById("directNumber").value);
 
-  const data = new FormData();
-  data.append("entry.2016327248", userName);
-  data.append("entry.363261105", userSNS);
-  data.append("entry.429828253", result);
-  data.append("entry.1683531211", scores.A);
-  data.append("entry.1818111503", scores.B);
-  data.append("entry.772384761", scores.C);
-  data.append("entry.1265151043", scores.D);
+  if(!userName){
+    alert("活動名を入力してね");
+    return;
+  }
+  if(n<1 || n>18){
+    alert("1〜18で入力してね");
+    return;
+  }
 
-  fetch(formURL, {
-    method: "POST",
-    mode: "no-cors",
-    body: data
-  });
+  document.getElementById("inputArea").style.display="none";
+  showResult(n);
+}
+
+function restart(){
+  scores={A:0,B:0,C:0,D:0};
+  current=0; history=[];
+  document.getElementById("resultArea").style.display="none";
+  document.getElementById("inputArea").style.display="block";
+}
+
+/* =====================
+   Googleフォーム
+===================== */
+function sendToGoogleForm(num){
+  const url="https://docs.google.com/forms/d/e/1FAIpQLSeImoVfM8wsLUi4aGz1tcqxeHvzNd9EGf3Lp926IHsy03L3VQ/formResponse";
+  const d=new FormData();
+  d.append("entry.2016327248",userName);
+  d.append("entry.363261105",userSNS);
+  d.append("entry.429828253",num);
+  fetch(url,{method:"POST",mode:"no-cors",body:d});
 }
 </script>
 
