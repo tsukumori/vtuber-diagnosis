@@ -33,11 +33,10 @@ button {
 
 <h1>VTuberタイプ診断</h1>
 
-<!-- テスト用スイッチ（常時表示） -->
 <div class="switches">
   <label>
-    <input type="checkbox" id="modeSwitch">
-    オーディション後表示（アイテム名）
+    <input type="checkbox" id="modeSwitch" checked>
+    オーディション前表示（番号表示）
   </label><br>
   <label>
     <input type="checkbox" id="rainbowSwitch">
@@ -45,7 +44,6 @@ button {
   </label>
 </div>
 
-<!-- 入力画面 -->
 <div id="inputArea">
   <p>
     活動名（必須）<br>
@@ -64,23 +62,22 @@ button {
   <p><strong>診断済み（番号取得済み）の方はこちら</strong></p>
 
   <p>
-    診断結果番号（1〜18）<br>
-    <input id="directNumber" type="number" min="1" max="18">
+    診断結果番号（1〜20）<br>
+    <input id="directNumber" type="number" min="1" max="20">
   </p>
 
   <button onclick="jumpResult()">番号で結果を見る</button>
 </div>
 
-<!-- 診断画面 -->
 <div id="diagnosisArea" style="display:none;">
   <div id="question"></div>
   <div id="buttons"></div>
   <button onclick="goBack()">← 戻る</button>
 </div>
 
-<!-- 結果画面 -->
 <div id="resultArea" style="display:none;">
   <div id="result"></div>
+  <div id="resultImage"></div>
   <button id="shareBtn">Xで共有</button><br>
   <button onclick="restart()">もう一度診断</button>
 </div>
@@ -91,11 +88,26 @@ button {
 ===================== */
 const resultList = [
   null,
-  "押し花の栞","万年筆","釣り","砂時計",
-  "ガラスペン","剣","万華鏡","文字が流れる台本ノート",
-  "地球儀","無限ツッコミハリセン","知性メガネ","チェックリスト腕時計",
-  "ぷりぷり猫耳","ド派手クラッカー","ふわふわ天使の羽","冒険地図",
-  "⚖️ 天秤","🌈 虹色マイク（選ばれし者）"
+  "みんなを連れていく冒険地図",
+  "止まらないおしゃべりリップ",
+  "ノリで撃つスピードガン",
+  "一瞬で沸かすド派手クラッカー",
+  "安定運用の砂時計",
+  "話題無限の地球儀",
+  "完璧主義のチェック腕時計",
+  "思い出を挟む押し花の栞",
+  "芯のある万年筆",
+  "夢見がちなキラキラ万華鏡",
+  "正直一直線の王道ソード",
+  "かまってほしいうさ耳",
+  "世界を組み立てる台本ノート",
+  "夜にひらく日記帳",
+  "冷静沈着の真面目さん知性メガネ",
+  "ことばが透ける繊細ガラスペン",
+  "流れに合わせる調律の天秤",
+  "🌈 虹色マイク",
+  "ふわふわ天使の羽",
+  "沼らせ小悪魔の黒羽"
 ];
 
 const resultKeyMap = {
@@ -110,28 +122,29 @@ let userSNS = "";
 let scores = {A:0,B:0,C:0,D:0};
 let current = 0;
 let history = [];
+let angelDevilChoice = null;
 
 const questions = [
-  {axis:"A",text:"配信の理想は？",choices:["一人","どちらでも","誰かと"]},
-  {axis:"A",text:"トラブル時は？",choices:["一人で","場合による","相談"]},
-  {axis:"A",text:"コラボは？",choices:["苦手","普通","好き"]},
+ { axis: "A", text: "配信の理想は？", choices: ["一人で黙々やる", "どちらでも", "誰かと一緒にやる"] },
+ { axis: "A", text: "トラブルが起きたとき、どうする？", choices: ["まず一人で考える", "場合による", "すぐ誰かに相談"] },
+ { axis: "A", text: "コラボ配信についてどう思う？", choices: ["正直あまり得意じゃない", "どちらとも言えない", "大好き／積極的"] },
 
-  {axis:"B",text:"配信内容は？",choices:["分析","半々","ノリ"]},
-  {axis:"B",text:"データ見る？",choices:["見る","たまに","見ない"]},
-  {axis:"B",text:"伸びる秘訣は？",choices:["改善","両方","勢い"]},
+ { axis: "B", text: "配信内容を決めるときは？", choices: ["数字や反応を重視", "半々くらい", "気分やノリ"] },
+ { axis: "B", text: "配信後、アーカイブやデータを見る？", choices: ["かなり細かく見る", "たまに見る", "ほとんど見ない"] },
+ { axis: "B", text: "伸びる配信に必要だと思うのは？", choices: ["分析と改善", "両方大事", "勢いと熱量"] },
 
-  {axis:"C",text:"配信時間は？",choices:["短め","普通","長時間"]},
-  {axis:"C",text:"集中力は？",choices:["短期","波","持続"]},
-  {axis:"C",text:"ハマると？",choices:["飽きる","普通","没頭"]},
+ { axis: "C", text: "理想の配信時間は？", choices: ["1時間前後", "2〜3時間", "気づいたら長時間"] }, 
+ { axis: "C", text: "配信中の集中力は？", choices: ["短期集中型", "波がある", "長く続く"] }, 
+ { axis: "C", text: "ゲームや作業にハマると？", choices: ["すぐ飽きる", "ものによる", "何時間もやる"] },
 
-  {axis:"D",text:"準備量は？",choices:["なし","最低限","万全"]},
-  {axis:"D",text:"管理は？",choices:["ゆるい","普通","厳密"]},
-  {axis:"D",text:"台本は？",choices:["使わない","安心","必須"]}
+ { axis: "D", text: "配信準備はどれくらいする？", choices: ["ほぼノープラン", "最低限", "しっかり"] }, 
+ { axis: "D", text: "スケジュール管理は？", choices: ["ゆるめ", "普通", "きっちり"] }, 
+ { axis: "D", text: "台本や進行表について", choices: ["あまり使わない", "あると安心", "必須"] },
+
+ { axis: null, text: "自分の雰囲気に合っていると思う言葉は？",
+   choices: ["「癒される」「守りたい」","どちらもしっくりこない／どちらも合っている","「ずるい」「沼る」"] }
 ];
 
-/* =====================
-   共通
-===================== */
 function shuffle(arr){
   for(let i=arr.length-1;i>0;i--){
     const j=Math.floor(Math.random()*(i+1));
@@ -139,18 +152,10 @@ function shuffle(arr){
   }
 }
 
-/* =====================
-   診断開始
-===================== */
 function startDiagnosis(){
   userName = document.getElementById("nameInput").value.trim();
   userSNS  = document.getElementById("snsInput").value.trim();
-
-  if(!userName){
-    alert("活動名を入力してね");
-    return;
-  }
-
+  if(!userName){ alert("活動名を入力してね"); return; }
   shuffle(questions);
   document.getElementById("inputArea").style.display="none";
   document.getElementById("diagnosisArea").style.display="block";
@@ -161,8 +166,7 @@ function showQuestion(){
   const q = questions[current];
   document.getElementById("question").textContent = `Q${current+1}. ${q.text}`;
   const buttons = document.getElementById("buttons");
-  buttons.innerHTML = "";
-
+  buttons.innerHTML="";
   q.choices.forEach((c,i)=>{
     const b=document.createElement("button");
     b.textContent=c;
@@ -174,7 +178,11 @@ function showQuestion(){
 function answer(v){
   const a=questions[current].axis;
   history.push({a,v});
-  scores[a]+=v;
+  if(a){
+    scores[a]+=v;
+  }else{
+    angelDevilChoice = v;
+  }
   current++;
   current<questions.length ? showQuestion() : showResult(calcResult());
 }
@@ -183,13 +191,14 @@ function goBack(){
   if(current===0)return;
   current--;
   const h=history.pop();
-  scores[h.a]-=h.v;
+  if(h.a){
+    scores[h.a]-=h.v;
+  }else{
+    angelDevilChoice = null;
+  }
   showQuestion();
 }
 
-/* =====================
-   結果計算
-===================== */
 function calcResult(){
   if(document.getElementById("rainbowSwitch").checked) return 18;
 
@@ -199,68 +208,101 @@ function calcResult(){
     key+=scores[a]>=0?"0":"1";
   });
 
-  if(balanced>=3) return 17;
-  if(Math.random()<0.00001) return 18;
-  return resultKeyMap[key];
+  let base;
+  if(balanced>=3) base=17;
+  else if(Math.random()<0.00001) base=18;
+  else base=resultKeyMap[key];
+
+  const isFuwa = scores.D < 0;
+  const isShikkari = scores.D > 0;
+  const isPassion = scores.B > 0;
+  const isData = scores.B < 0;
+
+  if(angelDevilChoice === -1){
+    if(isFuwa && isPassion && Math.random()<0.3) return 19;
+  }
+
+  if(angelDevilChoice === 1){
+    if(isShikkari && isData && Math.random()<0.3) return 20;
+  }
+
+  return base;
 }
 
 function showResult(num){
   document.getElementById("diagnosisArea").style.display="none";
   document.getElementById("resultArea").style.display="block";
 
-  const after = document.getElementById("modeSwitch").checked;
+  const after = !document.getElementById("modeSwitch").checked;
+  const isRainbow = (num === 18);
   const display = after ? resultList[num] : `診断結果番号：${num}`;
 
   document.getElementById("result").textContent =
     `${userName}さんの診断結果：${display}`;
 
-  document.getElementById("shareBtn").onclick = ()=>{
-    window.open(
-      "https://twitter.com/intent/tweet?text=" +
-      encodeURIComponent(`${userName}の診断結果は「${resultList[num]}」！ #VTuberタイプ診断 #NyanProLab`)
-    );
-  };
+  document.getElementById("resultImage").innerHTML =
+    after
+      ? `<img src="${num}.png" alt="診断結果画像" style="max-width:300px;margin-top:20px;">`
+      : "";
+
+  const shareBtn = document.getElementById("shareBtn");
+
+  if(after){
+    shareBtn.style.display="inline-block";
+
+    const tweetText = isRainbow
+      ? `【🌈超レア診断結果🌈】
+${userName}さんの配信スタイルに最適なアイテムは
+「虹色マイク（選ばれし者）」でした🎤✨
+
+#VTuberタイプ診断 #NyanProLab`
+      : `${userName}さんの配信スタイルに最適なアイテムは「${resultList[num]}」でした🩵✨
+あなたは何が出る？
+
+#VTuberタイプ診断 #NyanProLab`;
+
+    shareBtn.onclick = ()=>{
+      window.open(
+        "https://twitter.com/intent/tweet?text=" +
+        encodeURIComponent(tweetText),
+        "_blank"
+      );
+    };
+  }else{
+    shareBtn.style.display="none";
+  }
 
   sendToGoogleForm(num);
 }
 
-/* =====================
-   番号ジャンプ
-===================== */
 function jumpResult(){
   userName = document.getElementById("nameInput").value.trim();
   userSNS  = document.getElementById("snsInput").value.trim();
-  const n = parseInt(document.getElementById("directNumber").value);
-
-  if(!userName){
-    alert("活動名を入力してね");
-    return;
-  }
-  if(n<1 || n>18){
-    alert("1〜18で入力してね");
-    return;
-  }
-
+  const n=parseInt(document.getElementById("directNumber").value);
+  if(!userName){ alert("活動名を入力してね"); return; }
+  if(n<1||n>20){ alert("1〜20で入力してね"); return; }
   document.getElementById("inputArea").style.display="none";
   showResult(n);
 }
 
 function restart(){
   scores={A:0,B:0,C:0,D:0};
+  angelDevilChoice=null;
   current=0; history=[];
   document.getElementById("resultArea").style.display="none";
   document.getElementById("inputArea").style.display="block";
 }
 
-/* =====================
-   Googleフォーム
-===================== */
 function sendToGoogleForm(num){
   const url="https://docs.google.com/forms/d/e/1FAIpQLSeImoVfM8wsLUi4aGz1tcqxeHvzNd9EGf3Lp926IHsy03L3VQ/formResponse";
   const d=new FormData();
   d.append("entry.2016327248",userName);
   d.append("entry.363261105",userSNS);
   d.append("entry.429828253",num);
+  d.append("entry.1683531211", scores.A);
+  d.append("entry.1818111503", scores.B);
+  d.append("entry.772384761", scores.C);
+  d.append("entry.1265151043", scores.D);
   fetch(url,{method:"POST",mode:"no-cors",body:d});
 }
 </script>
