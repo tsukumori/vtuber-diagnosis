@@ -7,17 +7,25 @@
 body {
   font-family: sans-serif;
   text-align: center;
-  padding: 40px;
+  padding: clamp(16px, 5vw, 40px);
+  font-size: clamp(14px, 3.5vw, 16px);
 }
 button {
   padding: 10px 16px;
   margin: 6px;
-  font-size: 14px;
+  font-size: clamp(13px, 3.5vw, 15px);
   min-width: 220px;
   cursor: pointer;
 }
-#question { font-size: 20px; margin-bottom: 20px; }
-#result { font-size: 22px; font-weight: bold; margin-top: 20px; }
+#question {
+  font-size: clamp(16px, 4.5vw, 20px);
+  margin-bottom: 20px;
+}
+#result {
+  font-size: clamp(18px, 5vw, 22px);
+  font-weight: bold;
+  margin-top: 20px;
+}
 .switches {
   position: fixed;
   top: 10px;
@@ -25,20 +33,13 @@ button {
   border: 1px solid #ccc;
   padding: 10px;
   background: #f9f9f9;
-  font-size: 12px;
+  font-size: clamp(11px, 3vw, 12px);
 }
 </style>
 </head>
 <body>
 
-<h1>VTuberタイプ診断（デモサイト）</h1>
-
-<div class="switches">
-  <label>
-    <input type="checkbox" id="rainbowSwitch">
-    🌈 虹色マイク確定
-  </label>
-</div>
+<h1>VTuberタイプ診断</h1>
 
 <div id="inputArea">
   <p>
@@ -88,11 +89,7 @@ const resultList = [
   "世界を組み立てる台本ノート",
   "夜にひらく日記帳",
   "冷静沈着の真面目さん知性メガネ",
-  "ことばが透ける繊細ガラスペン",
-  "流れに合わせる調律の天秤",
-  "🌈 虹色マイク",
-  "ふわふわ天使の羽",
-  "沼らせ小悪魔の黒羽"
+  "ことばが透ける繊細ガラスペン"
 ];
 
 const resultKeyMap = {
@@ -107,7 +104,6 @@ let userSNS = "";
 let scores = {A:0,B:0,C:0,D:0};
 let current = 0;
 let history = [];
-let angelDevilChoice = null;
 
 const questions = [
  { axis: "A", text: "配信の理想は？", choices: ["一人で黙々やる", "どちらでも", "誰かと一緒にやる"] },
@@ -124,10 +120,7 @@ const questions = [
 
  { axis: "D", text: "配信準備はどれくらいする？", choices: ["ほぼノープラン", "最低限", "しっかり"] }, 
  { axis: "D", text: "スケジュール管理は？", choices: ["ゆるめ", "普通", "きっちり"] }, 
- { axis: "D", text: "台本や進行表について", choices: ["あまり使わない", "あると安心", "必須"] },
-
- { axis: null, text: "自分の雰囲気に合っていると思う言葉は？",
-   choices: ["「癒される」「守りたい」","どちらもしっくりこない／どちらも合っている","「ずるい」「沼る」"] }
+ { axis: "D", text: "台本や進行表について", choices: ["あまり使わない", "あると安心", "必須"] }
 ];
 
 function shuffle(arr){
@@ -163,11 +156,7 @@ function showQuestion(){
 function answer(v){
   const a=questions[current].axis;
   history.push({a,v});
-  if(a){
-    scores[a]+=v;
-  }else{
-    angelDevilChoice = v;
-  }
+  scores[a]+=v;
   current++;
   current<questions.length ? showQuestion() : showResult(calcResult());
 }
@@ -176,42 +165,16 @@ function goBack(){
   if(current===0)return;
   current--;
   const h=history.pop();
-  if(h.a){
-    scores[h.a]-=h.v;
-  }else{
-    angelDevilChoice = null;
-  }
+  scores[h.a]-=h.v;
   showQuestion();
 }
 
 function calcResult(){
-  if(document.getElementById("rainbowSwitch").checked) return 18;
-
-  let key="", balanced=0;
+  let key="";
   ["A","B","C","D"].forEach(a=>{
-    if(Math.abs(scores[a])<=1) balanced++;
     key+=scores[a]>=0?"0":"1";
   });
-
-  let base;
-  if(balanced>=3) base=17;
-  else if(Math.random()<0.00001) base=18;
-  else base=resultKeyMap[key];
-
-  const isFuwa = scores.D < 0;
-  const isShikkari = scores.D > 0;
-  const isPassion = scores.B > 0;
-  const isData = scores.B < 0;
-
-  if(angelDevilChoice === -1){
-    if(isFuwa && isPassion && Math.random()<0.3) return 19;
-  }
-
-  if(angelDevilChoice === 1){
-    if(isShikkari && isData && Math.random()<0.3) return 20;
-  }
-
-  return base;
+  return resultKeyMap[key];
 }
 
 function showResult(num){
@@ -222,24 +185,15 @@ function showResult(num){
     `${userName}さんの診断結果：${resultList[num]}`;
 
   document.getElementById("resultImage").innerHTML =
-    `<img src="images/${num}.png" alt="診断結果画像" style="max-width:300px;margin-top:20px;">`;
+    `<img src="images/${num}.png" alt="診断結果画像" style="max-width:450px;margin-top:20px;">`;
 
-  const shareBtn = document.getElementById("shareBtn");
-
-  const isRainbow = (num === 18);
-
-  const tweetText = isRainbow
-    ? `【🌈超レア診断結果🌈】
-${userName}さんの配信スタイルに最適なアイテムは
-「虹色マイク（選ばれし者）」でした🎤✨
-
-#VTuberタイプ診断 #NyanProLab`
-    : `${userName}さんの配信スタイルに最適なアイテムは「${resultList[num]}」でした🩵✨
+  const tweetText =
+    `${userName}さんの配信スタイルに最適なアイテムは「${resultList[num]}」でした✨
 あなたは何が出る？
 
 #VTuberタイプ診断 #NyanProLab`;
 
-  shareBtn.onclick = ()=>{
+  document.getElementById("shareBtn").onclick = ()=>{
     window.open(
       "https://twitter.com/intent/tweet?text=" +
       encodeURIComponent(tweetText),
@@ -250,7 +204,6 @@ ${userName}さんの配信スタイルに最適なアイテムは
 
 function restart(){
   scores={A:0,B:0,C:0,D:0};
-  angelDevilChoice=null;
   current=0; history=[];
   document.getElementById("resultArea").style.display="none";
   document.getElementById("inputArea").style.display="block";
