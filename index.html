@@ -34,6 +34,8 @@ button {
 .backButton {
   background: #666;
   color: #fff;
+  border: none;
+  border-radius: 0;
 }
 
 #question {
@@ -206,7 +208,11 @@ function answer(v){
 }
 
 function goBack(){
-  if(current===0)return;
+  if(current === 0){
+    document.getElementById("diagnosisArea").style.display = "none";
+    document.getElementById("inputArea").style.display = "block";
+    return;
+  }
   current--;
   const h=history.pop();
   scores[h.a]-=h.v;
