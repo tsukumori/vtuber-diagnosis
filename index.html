@@ -7,39 +7,44 @@
 body {
   font-family: sans-serif;
   text-align: center;
-  padding: clamp(16px, 5vw, 40px);
-  font-size: clamp(14px, 3.5vw, 16px);
+  padding: clamp(20px, 6vw, 40px);
+  font-size: clamp(16px, 4.5vw, 18px);
 }
+
+h1 {
+  font-size: clamp(22px, 6vw, 28px);
+}
+
+input {
+  font-size: clamp(16px, 4.5vw, 18px);
+  padding: 10px;
+  width: min(90%, 320px);
+}
+
 button {
-  padding: 10px 16px;
-  margin: 6px;
-  font-size: clamp(13px, 3.5vw, 15px);
-  min-width: 220px;
+  padding: 14px 20px;
+  margin: 10px;
+  font-size: clamp(16px, 4.5vw, 18px);
+  min-width: min(90%, 280px);
   cursor: pointer;
 }
+
 #question {
-  font-size: clamp(16px, 4.5vw, 20px);
-  margin-bottom: 20px;
+  font-size: clamp(18px, 5.5vw, 22px);
+  margin-bottom: 24px;
 }
+
 #result {
-  font-size: clamp(18px, 5vw, 22px);
+  font-size: clamp(20px, 6vw, 24px);
   font-weight: bold;
-  margin-top: 20px;
+  margin-top: 24px;
 }
-.switches {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  border: 1px solid #ccc;
-  padding: 10px;
-  background: #f9f9f9;
-  font-size: clamp(11px, 3vw, 12px);
-}
+
 </style>
 </head>
 <body>
 
-<h1>VTuberタイプ診断</h1>
+<h1>VTuberタイプ診断（デモサイト）</h1>
 
 <div id="inputArea">
   <p>
@@ -185,7 +190,7 @@ function showResult(num){
     `${userName}さんの診断結果：${resultList[num]}`;
 
   document.getElementById("resultImage").innerHTML =
-    `<img src="images/${num}.png" alt="診断結果画像" style="max-width:450px;margin-top:20px;">`;
+    `<img src="images/${num}.png" alt="診断結果画像" style="width:100%;max-width:600px;margin-top:24px;">`;
 
   const tweetText =
     `${userName}さんの配信スタイルに最適なアイテムは「${resultList[num]}」でした🩵✨
