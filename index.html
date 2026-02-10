@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>VTuberタイプ診断（デモサイト）</title>
+<title>VTuberタイプ診断</title>
 <style>
 body {
   font-family: sans-serif;
@@ -113,6 +113,146 @@ const questions = [
 
  { axis: "B", text: "配信内容を決めるときは？", choices: ["数字や反応を重視", "半々くらい", "気分やノリ"] },
  { axis: "B", text: "配信後、アーカイブやデータを見る？", choices: ["かなり細かく見る", "たまに見る", "ほとんど見ない"] },
- { axis: "B", text: "伸びる配信に必要だと思う
+ { axis: "B", text: "伸びる配信に必要だと思うのは？", choices: ["分析と改善", "両方大事", "勢いと熱量"] },
 
+ { axis: "C", text: "理想の配信時間は？", choices: ["1時間前後", "2〜3時間", "気づいたら長時間"] }, 
+ { axis: "C", text: "配信中の集中力は？", choices: ["短期集中型", "波がある", "長く続く"] }, 
+ { axis: "C", text: "ゲームや作業にハマると？", choices: ["すぐ飽きる", "ものによる", "何時間もやる"] },
 
+ { axis: "D", text: "配信準備はどれくらいする？", choices: ["ほぼノープラン", "最低限", "しっかり"] }, 
+ { axis: "D", text: "スケジュール管理は？", choices: ["ゆるめ", "普通", "きっちり"] }, 
+ { axis: "D", text: "台本や進行表について", choices: ["あまり使わない", "あると安心", "必須"] },
+
+ { axis: null, text: "自分の雰囲気に合っていると思う言葉は？",
+   choices: ["「癒される」「守りたい」","どちらもしっくりこない／どちらも合っている","「ずるい」「沼る」"] }
+];
+
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+}
+
+function startDiagnosis(){
+  userName = document.getElementById("nameInput").value.trim();
+  userSNS  = document.getElementById("snsInput").value.trim();
+  if(!userName){ alert("活動名を入力してね"); return; }
+  shuffle(questions);
+  document.getElementById("inputArea").style.display="none";
+  document.getElementById("diagnosisArea").style.display="block";
+  showQuestion();
+}
+
+function showQuestion(){
+  const q = questions[current];
+  document.getElementById("question").textContent = `Q${current+1}. ${q.text}`;
+  const buttons = document.getElementById("buttons");
+  buttons.innerHTML="";
+  q.choices.forEach((c,i)=>{
+    const b=document.createElement("button");
+    b.textContent=c;
+    b.onclick=()=>answer(i-1);
+    buttons.appendChild(b);
+  });
+}
+
+function answer(v){
+  const a=questions[current].axis;
+  history.push({a,v});
+  if(a){
+    scores[a]+=v;
+  }else{
+    angelDevilChoice = v;
+  }
+  current++;
+  current<questions.length ? showQuestion() : showResult(calcResult());
+}
+
+function goBack(){
+  if(current===0)return;
+  current--;
+  const h=history.pop();
+  if(h.a){
+    scores[h.a]-=h.v;
+  }else{
+    angelDevilChoice = null;
+  }
+  showQuestion();
+}
+
+function calcResult(){
+  if(document.getElementById("rainbowSwitch").checked) return 18;
+
+  let key="", balanced=0;
+  ["A","B","C","D"].forEach(a=>{
+    if(Math.abs(scores[a])<=1) balanced++;
+    key+=scores[a]>=0?"0":"1";
+  });
+
+  let base;
+  if(balanced>=3) base=17;
+  else if(Math.random()<0.00001) base=18;
+  else base=resultKeyMap[key];
+
+  const isFuwa = scores.D < 0;
+  const isShikkari = scores.D > 0;
+  const isPassion = scores.B > 0;
+  const isData = scores.B < 0;
+
+  if(angelDevilChoice === -1){
+    if(isFuwa && isPassion && Math.random()<0.3) return 19;
+  }
+
+  if(angelDevilChoice === 1){
+    if(isShikkari && isData && Math.random()<0.3) return 20;
+  }
+
+  return base;
+}
+
+function showResult(num){
+  document.getElementById("diagnosisArea").style.display="none";
+  document.getElementById("resultArea").style.display="block";
+
+  document.getElementById("result").textContent =
+    `${userName}さんの診断結果：${resultList[num]}`;
+
+  document.getElementById("resultImage").innerHTML =
+    `<img src="./${num}.png" alt="診断結果画像" style="max-width:300px;margin-top:20px;">`;
+
+  const shareBtn = document.getElementById("shareBtn");
+
+  const isRainbow = (num === 18);
+
+  const tweetText = isRainbow
+    ? `【🌈超レア診断結果🌈】
+${userName}さんの配信スタイルに最適なアイテムは
+「虹色マイク（選ばれし者）」でした🎤✨
+
+#VTuberタイプ診断 #NyanProLab`
+    : `${userName}さんの配信スタイルに最適なアイテムは「${resultList[num]}」でした🩵✨
+あなたは何が出る？
+
+#VTuberタイプ診断 #NyanProLab`;
+
+  shareBtn.onclick = ()=>{
+    window.open(
+      "https://twitter.com/intent/tweet?text=" +
+      encodeURIComponent(tweetText),
+      "_blank"
+    );
+  };
+}
+
+function restart(){
+  scores={A:0,B:0,C:0,D:0};
+  angelDevilChoice=null;
+  current=0; history=[];
+  document.getElementById("resultArea").style.display="none";
+  document.getElementById("inputArea").style.display="block";
+}
+</script>
+
+</body>
+</html>
