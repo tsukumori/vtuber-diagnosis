@@ -35,10 +35,6 @@ button {
 
 <div class="switches">
   <label>
-    <input type="checkbox" id="modeSwitch" checked>
-    オーディション前表示（番号表示）
-  </label><br>
-  <label>
     <input type="checkbox" id="rainbowSwitch">
     🌈 虹色マイク確定
   </label>
@@ -56,17 +52,6 @@ button {
   </p>
 
   <button onclick="startDiagnosis()">診断スタート</button>
-
-  <br><br>
-
-  <p><strong>診断済み（番号取得済み）の方はこちら</strong></p>
-
-  <p>
-    診断結果番号（1〜20）<br>
-    <input id="directNumber" type="number" min="1" max="20">
-  </p>
-
-  <button onclick="jumpResult()">番号で結果を見る</button>
 </div>
 
 <div id="diagnosisArea" style="display:none;">
@@ -233,56 +218,34 @@ function showResult(num){
   document.getElementById("diagnosisArea").style.display="none";
   document.getElementById("resultArea").style.display="block";
 
-  const after = !document.getElementById("modeSwitch").checked;
-  const isRainbow = (num === 18);
-  const display = after ? resultList[num] : `診断結果番号：${num}`;
-
   document.getElementById("result").textContent =
-    `${userName}さんの診断結果：${display}`;
+    `${userName}さんの診断結果：${resultList[num]}`;
 
   document.getElementById("resultImage").innerHTML =
-    after
-      ? `<img src="images/${num}.png" alt="診断結果画像" style="max-width:300px;margin-top:20px;">`
-      : "";
+    `<img src="${num}.png" alt="診断結果画像" style="max-width:300px;margin-top:20px;">`;
 
   const shareBtn = document.getElementById("shareBtn");
 
-  if(after){
-    shareBtn.style.display="inline-block";
+  const isRainbow = (num === 18);
 
-    const tweetText = isRainbow
-      ? `【🌈超レア診断結果🌈】
+  const tweetText = isRainbow
+    ? `【🌈超レア診断結果🌈】
 ${userName}さんの配信スタイルに最適なアイテムは
 「虹色マイク（選ばれし者）」でした🎤✨
 
 #VTuberタイプ診断 #NyanProLab`
-      : `${userName}さんの配信スタイルに最適なアイテムは「${resultList[num]}」でした🩵✨
+    : `${userName}さんの配信スタイルに最適なアイテムは「${resultList[num]}」でした🩵✨
 あなたは何が出る？
 
 #VTuberタイプ診断 #NyanProLab`;
 
-    shareBtn.onclick = ()=>{
-      window.open(
-        "https://twitter.com/intent/tweet?text=" +
-        encodeURIComponent(tweetText),
-        "_blank"
-      );
-    };
-  }else{
-    shareBtn.style.display="none";
-  }
-
-  sendToGoogleForm(num);
-}
-
-function jumpResult(){
-  userName = document.getElementById("nameInput").value.trim();
-  userSNS  = document.getElementById("snsInput").value.trim();
-  const n=parseInt(document.getElementById("directNumber").value);
-  if(!userName){ alert("活動名を入力してね"); return; }
-  if(n<1||n>20){ alert("1〜20で入力してね"); return; }
-  document.getElementById("inputArea").style.display="none";
-  showResult(n);
+  shareBtn.onclick = ()=>{
+    window.open(
+      "https://twitter.com/intent/tweet?text=" +
+      encodeURIComponent(tweetText),
+      "_blank"
+    );
+  };
 }
 
 function restart(){
@@ -291,19 +254,6 @@ function restart(){
   current=0; history=[];
   document.getElementById("resultArea").style.display="none";
   document.getElementById("inputArea").style.display="block";
-}
-
-function sendToGoogleForm(num){
-  const url="https://docs.google.com/forms/d/e/1FAIpQLSeImoVfM8wsLUi4aGz1tcqxeHvzNd9EGf3Lp926IHsy03L3VQ/formResponse";
-  const d=new FormData();
-  d.append("entry.2016327248",userName);
-  d.append("entry.363261105",userSNS);
-  d.append("entry.429828253",num);
-  d.append("entry.1683531211", scores.A);
-  d.append("entry.1818111503", scores.B);
-  d.append("entry.772384761", scores.C);
-  d.append("entry.1265151043", scores.D);
-  fetch(url,{method:"POST",mode:"no-cors",body:d});
 }
 </script>
 
