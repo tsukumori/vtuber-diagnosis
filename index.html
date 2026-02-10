@@ -28,6 +28,7 @@ button {
   font-size: clamp(16px, 4.5vw, 18px);
   min-width: min(90%, 280px);
   cursor: pointer;
+  border-radius: 8px;
 }
 
 /* 戻るボタン専用 */
@@ -35,7 +36,7 @@ button {
   background: #666;
   color: #fff;
   border: none;
-  border-radius: 0;
+  border-radius: 8px;
 }
 
 #question {
@@ -89,13 +90,8 @@ button {
 
 <div id="inputArea">
   <p>
-    活動名（必須）<br>
+    お名前（任意）<br>
     <input id="nameInput">
-  </p>
-
-  <p>
-    SNS（任意）<br>
-    <input id="snsInput">
   </p>
 
   <button onclick="startDiagnosis()">診断スタート</button>
@@ -110,8 +106,7 @@ button {
 <div id="resultArea" style="display:none;">
   <div id="result"></div>
   <div id="resultImage"></div>
-  <button id="shareBtn">Xで共有</button><br>
-  <button onclick="restart()">もう一度診断</button>
+  <button id="shareBtn">Xで共有</button>
 </div>
 
 <script>
@@ -146,7 +141,6 @@ const resultKeyMap = {
 };
 
 let userName = "";
-let userSNS = "";
 let scores = {A:0,B:0,C:0,D:0};
 let current = 0;
 let history = [];
@@ -178,8 +172,6 @@ function shuffle(arr){
 
 function startDiagnosis(){
   userName = document.getElementById("nameInput").value.trim();
-  userSNS  = document.getElementById("snsInput").value.trim();
-  if(!userName){ alert("活動名を入力してね"); return; }
   shuffle(questions);
   document.getElementById("inputArea").style.display="none";
   document.getElementById("diagnosisArea").style.display="block";
@@ -231,14 +223,14 @@ function showResult(num){
   document.getElementById("diagnosisArea").style.display="none";
   document.getElementById("resultArea").style.display="block";
 
-  document.getElementById("result").textContent =
-    `${userName}さんの診断結果：${resultList[num]}`;
+  const title = userName ? `${userName}さんの診断結果` : "あなたの診断結果";
+  document.getElementById("result").textContent = title;
 
   document.getElementById("resultImage").innerHTML =
     `<img src="images/${num}.png" alt="診断結果画像" style="width:100%;max-width:600px;margin-top:24px;">`;
 
   const tweetText =
-    `${userName}さんの配信スタイルに最適なアイテムは「${resultList[num]}」でした🩵✨
+    `${title}は「${resultList[num]}」でした🩵✨
 あなたは何が出る？
 
 #VTuberタイプ診断 #NyanProLab`;
@@ -250,13 +242,6 @@ function showResult(num){
       "_blank"
     );
   };
-}
-
-function restart(){
-  scores={A:0,B:0,C:0,D:0};
-  current=0; history=[];
-  document.getElementById("resultArea").style.display="none";
-  document.getElementById("inputArea").style.display="block";
 }
 </script>
 
