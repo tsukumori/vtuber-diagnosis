@@ -31,7 +31,7 @@ button {
 </head>
 <body>
 
-<h1>VTuberタイプ診断（デモサイト）</h1>
+<h1>VTuberタイプ診断</h1>
 
 <div class="switches">
   <label>
@@ -68,6 +68,9 @@ button {
 </div>
 
 <script>
+/* =====================
+   定数・変数
+===================== */
 const resultList = [
   null,
   "みんなを連れていく冒険地図",
@@ -219,9 +222,7 @@ function showResult(num){
     `${userName}さんの診断結果：${resultList[num]}`;
 
   document.getElementById("resultImage").innerHTML =
-    after
-      ? `<img src="${num}.png" alt="診断結果画像" style="max-width:300px;margin-top:20px;">`
-      : "";
+    `<img src="${num}.png" alt="診断結果画像" style="max-width:300px;margin-top:20px;">`;
 
   const shareBtn = document.getElementById("shareBtn");
 
@@ -258,5 +259,3 @@ function restart(){
 
 </body>
 </html>
-
-
