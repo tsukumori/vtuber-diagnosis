@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VTuberタイプ診断</title>
 <style>
 body {
@@ -40,6 +41,38 @@ button {
   margin-top: 24px;
 }
 
+/* ===== スマホ専用調整 ===== */
+@media (max-width: 480px) {
+  body {
+    font-size: 18px;
+  }
+
+  h1 {
+    font-size: 26px;
+  }
+
+  input {
+    font-size: 18px;
+    padding: 14px;
+  }
+
+  button {
+    font-size: 18px;
+    padding: 16px 20px;
+  }
+
+  #question {
+    font-size: 22px;
+  }
+
+  #result {
+    font-size: 24px;
+  }
+
+  #resultImage img {
+    max-width: 100%;
+  }
+}
 </style>
 </head>
 <body>
