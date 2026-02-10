@@ -30,6 +30,12 @@ button {
   cursor: pointer;
 }
 
+/* 戻るボタン専用 */
+.backButton {
+  background: #666;
+  color: #fff;
+}
+
 #question {
   font-size: clamp(18px, 5.5vw, 22px);
   margin-bottom: 24px;
@@ -96,7 +102,7 @@ button {
 <div id="diagnosisArea" style="display:none;">
   <div id="question"></div>
   <div id="buttons"></div>
-  <button onclick="goBack()">← 戻る</button>
+  <button class="backButton" onclick="goBack()">← 戻る</button>
 </div>
 
 <div id="resultArea" style="display:none;">
